@@ -1,0 +1,2567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BhilaiFlood ICCC — Smart Flood Intelligence Platform</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #eef2f7;
+      --nav-bg: #0f1b2d;
+      --nav-hover: #1a2d47;
+      --nav-active: #1e3a5f;
+      --nav-accent: #3b82f6;
+      --primary: #1d4ed8;
+      --primary-light: #3b82f6;
+      --primary-xlight: #eff6ff;
+      --accent-teal: #0891b2;
+      --accent-emerald: #059669;
+      --accent-orange: #d97706;
+      --accent-red: #dc2626;
+      --accent-violet: #7c3aed;
+      --text: #0f172a;
+      --text-2: #334155;
+      --text-3: #64748b;
+      --text-4: #94a3b8;
+      --border: #e2e8f0;
+      --border-2: #cbd5e1;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 4px 16px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --nav-width: 240px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+    }
+
+    /* ─── LEFT NAVIGATION ─── */
+    #nav {
+      width: var(--nav-width);
+      background: var(--nav-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    #nav::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, rgba(59,130,246,0.5), rgba(59,130,246,0.2), transparent);
+    }
+
+    /* Nav animated bg particles */
+    #nav::after {
+      content: '';
+      position: absolute;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+      bottom: 60px; left: -60px;
+      border-radius: 50%;
+      animation: navGlow 4s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes navGlow {
+      from { opacity: 0.5; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.3); }
+    }
+
+    .nav-brand {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .nav-brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+      animation: iconFloat 3s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes iconFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .nav-brand-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.3px;
+    }
+    .nav-brand-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .nav-location {
+      margin: 10px 14px 0;
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 8px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .nav-location-dot {
+      width: 6px; height: 6px;
+      background: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .nav-location-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .nav-location-text strong { color: #93c5fd; font-weight: 500; }
+
+    .nav-menu {
+      padding: 16px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-section-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      padding: 8px 8px 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: rgba(255,255,255,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.05));
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: 10px;
+    }
+    .nav-item:hover { color: rgba(255,255,255,0.85); }
+    .nav-item:hover::before { opacity: 1; }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1));
+      color: #ffffff;
+      border: 1px solid rgba(59,130,246,0.3);
+    }
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 60%;
+      background: var(--nav-accent);
+      border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 8px rgba(59,130,246,0.6);
+    }
+    .nav-item-icon {
+      font-size: 18px;
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .nav-item-label {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+    .nav-item-badge {
+      margin-left: auto;
+      background: rgba(239,68,68,0.2);
+      color: #fca5a5;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(239,68,68,0); }
+      50% { box-shadow: 0 0 8px rgba(239,68,68,0.3); }
+    }
+
+    .nav-footer {
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-footer-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: rgba(52,211,153,0.08);
+      border: 1px solid rgba(52,211,153,0.15);
+      border-radius: 8px;
+    }
+    .nav-footer-status-dot {
+      width: 7px; height: 7px;
+      background: #34d399;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px #34d399;
+    }
+    .nav-footer-status-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .nav-footer-status-text strong { color: #6ee7b7; }
+    .nav-time {
+      margin-top: 8px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 2px;
+    }
+
+    /* ─── MAIN CONTENT ─── */
+    #app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Top bar */
+    #topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      z-index: 50;
+    }
+    .topbar-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .topbar-sub {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-left: 4px;
+    }
+    .topbar-divider { width: 1px; height: 24px; background: var(--border); }
+    .topbar-badge {
+      background: var(--primary-xlight);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(29,78,216,0.15);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .topbar-badge.live {
+      background: #f0fdf4;
+      color: #166534;
+      border-color: rgba(22,101,52,0.15);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-badge.live::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .topbar-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+    .topbar-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .topbar-btn:hover { background: var(--surface-3); border-color: var(--border-2); }
+    .topbar-btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .topbar-btn.primary:hover { background: #1e40af; }
+
+    /* ─── VIEWS ─── */
+    #views-container {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .view { display: none; flex: 1; overflow: hidden; }
+    .view.active { display: flex; }
+
+    /* ─── DASHBOARD VIEW ─── */
+    #view-dashboard {
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    /* Left sidebar in dashboard */
+    #dash-sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      padding: 14px;
+      gap: 12px;
+    }
+    #dash-sidebar::-webkit-scrollbar { width: 3px; }
+    #dash-sidebar::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-4);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      transition: all 0.2s;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      border-radius: 0 0 0 0;
+    }
+    .stat-card.blue::before { background: var(--primary); }
+    .stat-card.red::before { background: var(--accent-red); }
+    .stat-card.orange::before { background: var(--accent-orange); }
+    .stat-card.green::before { background: var(--accent-emerald); }
+    .stat-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+    .stat-card-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+    .stat-card-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .stat-card-value.blue { color: var(--primary); }
+    .stat-card-value.red { color: var(--accent-red); }
+    .stat-card-value.orange { color: var(--accent-orange); }
+    .stat-card-value.green { color: var(--accent-emerald); }
+    .stat-card-sub { font-size: 11px; color: var(--text-4); margin-top: 2px; }
+
+    /* Layer toggles */
+    .layer-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+    .layer-toggle:last-child { border-bottom: none; }
+    .layer-toggle:hover .layer-name { color: var(--text); }
+    .layer-name {
+      font-size: 12px;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.15s;
+    }
+    .layer-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .toggle-switch {
+      width: 30px; height: 17px;
+      background: var(--border-2);
+      border-radius: 20px;
+      position: relative;
+      transition: background 0.2s;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .toggle-switch.on { background: var(--primary); }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 13px; height: 13px;
+      background: white;
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.on::after { left: 15px; }
+
+    /* Legend */
+    .legend-item {
+      display: flex; align-items: center;
+      gap: 8px; padding: 3px 0;
+      font-size: 11px; color: var(--text-2);
+    }
+    .legend-color {
+      width: 16px; height: 8px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Ward risk list */
+    .ward-risk-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      margin-bottom: 4px;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .ward-risk-item:hover { border-color: var(--border-2); box-shadow: var(--shadow-sm); }
+    .ward-risk-name { font-size: 12px; font-weight: 500; color: var(--text-2); }
+    .ward-risk-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Map area */
+    #map-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #map { width: 100%; height: 100%; }
+
+    .map-overlay-card {
+      position: absolute;
+      z-index: 1000;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 14px;
+      pointer-events: auto;
+    }
+    .map-overlay-card.route-tool {
+      bottom: 20px; right: 20px;
+      width: 230px;
+    }
+    .overlay-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .route-input {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 7px 10px;
+      width: 100%;
+      margin-bottom: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .route-input:focus { border-color: var(--primary); }
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary:hover { background: #1e40af; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,78,216,0.3); }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      width: 100%;
+      margin-top: 5px;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--border-2); background: var(--surface-2); }
+
+    .route-result {
+      margin-top: 10px;
+      background: var(--primary-xlight);
+      border: 1px solid rgba(29,78,216,0.15);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+    }
+    .route-result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      font-size: 12px;
+    }
+    .route-result-row span:last-child {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* Right panel */
+    #dash-panel {
+      width: 280px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .panel-tab {
+      flex: 1;
+      padding: 12px 6px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-3);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .panel-tab:hover { color: var(--text-2); }
+    .panel-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: var(--primary-xlight);
+    }
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+    .slider-group { margin-bottom: 14px; }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .slider-label { font-size: 12px; font-weight: 500; color: var(--text-2); }
+    .slider-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--border-2);
+      outline: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(29,78,216,0.4);
+      transition: transform 0.1s;
+    }
+    .slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    .dt-ward-selector {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      padding: 8px 12px;
+      width: 100%;
+      margin-bottom: 14px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .dt-ward-selector:focus { border-color: var(--primary); }
+
+    .dt-result-box {
+      background: var(--primary-xlight);
+      border: 1px solid rgba(29,78,216,0.15);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .dt-result-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .dt-score-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .dt-score-before {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-3);
+    }
+    .dt-arrow { color: var(--primary); font-size: 18px; }
+    .dt-score-after {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent-emerald);
+    }
+    .dt-gain {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--accent-emerald);
+      font-weight: 600;
+      margin-left: auto;
+    }
+    .impact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .impact-row:last-child { border-bottom: none; }
+    .impact-label { font-size: 11px; color: var(--text-3); }
+    .impact-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* Ward detail */
+    .ward-detail-card {
+      background: var(--primary-xlight);
+      border: 1px solid rgba(29,78,216,0.15);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .ward-detail-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .ward-detail-score {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .ward-detail-cat { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+    .chart-wrap {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge-high { background: #fef2f2; color: var(--accent-red); border: 1px solid rgba(220,38,38,0.2); }
+    .badge-mod { background: #fffbeb; color: var(--accent-orange); border: 1px solid rgba(217,119,6,0.2); }
+    .badge-low { background: #f0fdf4; color: var(--accent-emerald); border: 1px solid rgba(5,150,105,0.2); }
+
+    .panel-empty {
+      text-align: center;
+      color: var(--text-4);
+      font-size: 12px;
+      padding: 40px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.6;
+    }
+
+    .dt-loading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--primary);
+      padding: 8px 0;
+    }
+    .dt-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border-2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── BUDGET VIEW ─── */
+    #view-budget {
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 24px;
+      background: var(--bg);
+    }
+    .view-header {
+      margin-bottom: 24px;
+    }
+    .view-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .view-subtitle { font-size: 14px; color: var(--text-3); }
+    .budget-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1100px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .budget-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .budget-input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .budget-input:focus { border-color: var(--primary); }
+    .btn-sm {
+      padding: 9px 18px;
+      background: var(--primary);
+      border: none;
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-sm:hover { background: #1e40af; }
+
+    .budget-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .budget-stat-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+    .budget-stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .budget-stat-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .intervention-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .intervention-table th {
+      text-align: left;
+      padding: 6px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 2px solid var(--border);
+    }
+    .intervention-table td {
+      padding: 7px 8px;
+      color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .intervention-table td:first-child { font-weight: 500; color: var(--text); }
+    .cost-cell { color: var(--accent-orange); font-family: 'JetBrains Mono', monospace; }
+    .gain-cell { color: var(--accent-emerald); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+    /* ─── REPORT VIEW ─── */
+    #view-report {
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 24px;
+      background: var(--bg);
+    }
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      max-width: 1100px;
+      margin-bottom: 20px;
+    }
+    .report-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+    .report-stat::after {
+      content: attr(data-emoji);
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 32px;
+      opacity: 0.15;
+    }
+    .report-stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .report-stat-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .report-stat-sub {
+      font-size: 11px;
+      color: var(--text-4);
+      margin-top: 4px;
+    }
+    .report-2col {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      max-width: 1100px;
+    }
+    .report-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+    .report-list-item:hover { border-color: var(--border-2); box-shadow: var(--shadow-sm); }
+    .report-list-left { display: flex; align-items: center; gap: 10px; }
+    .report-list-rank {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-4);
+      min-width: 20px;
+    }
+    .report-list-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .report-list-sub { font-size: 11px; color: var(--text-3); }
+    .report-progress { 
+      width: 80px; height: 5px;
+      background: var(--border-2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+    .report-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    /* ─── SETTINGS VIEW ─── */
+    #view-settings {
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 24px;
+      background: var(--bg);
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 900px;
+    }
+    .settings-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .settings-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .settings-item:last-child { border-bottom: none; }
+    .settings-item-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .settings-item-sub { font-size: 11px; color: var(--text-3); }
+    .settings-toggle {
+      width: 42px; height: 24px;
+      background: var(--border-2);
+      border-radius: 20px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .settings-toggle.on { background: var(--primary); }
+    .settings-toggle::after {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: left 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .settings-toggle.on::after { left: 21px; }
+    .settings-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 6px 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* ─── CHATBOT ─── */
+    #chatbot-bubble {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+    }
+    .chat-fab {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(29,78,216,0.4);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-size: 22px;
+      position: relative;
+      border: none;
+      outline: none;
+    }
+    .chat-fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 32px rgba(29,78,216,0.5);
+    }
+    .chat-fab.open { background: linear-gradient(135deg, #374151, #4b5563); }
+    .chat-fab-badge {
+      position: absolute;
+      top: -3px; right: -3px;
+      width: 18px; height: 18px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      font-size: 10px;
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      border: 2px solid var(--bg);
+      animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    #chat-panel {
+      position: fixed;
+      bottom: 92px;
+      right: 24px;
+      width: 360px;
+      height: 500px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      z-index: 9998;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: chatSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #chat-panel.open {
+      display: flex;
+    }
+    @keyframes chatSlideIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, var(--nav-bg), #1a2d47);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .chat-header-avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .chat-header-info {}
+    .chat-header-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+    }
+    .chat-header-status {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .chat-header-status::before {
+      content: '';
+      width: 5px; height: 5px;
+      background: #34d399;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .chat-header-close {
+      margin-left: auto;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: rgba(255,255,255,0.7);
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .chat-header-close:hover { background: rgba(255,255,255,0.2); color: white; }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+    .chat-msg {
+      max-width: 85%;
+      animation: msgIn 0.25s ease;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .chat-msg.bot { align-self: flex-start; }
+    .chat-msg.user { align-self: flex-end; }
+    .chat-msg-bubble {
+      padding: 10px 13px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .chat-msg.bot .chat-msg-bubble {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+    .chat-msg.user .chat-msg-bubble {
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-msg-time {
+      font-size: 10px;
+      color: var(--text-4);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .chat-msg.user .chat-msg-time { text-align: right; }
+    .chat-typing {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .chat-typing-dot {
+      width: 7px; height: 7px;
+      background: var(--text-4);
+      border-radius: 50%;
+      animation: typingBounce 1.2s ease-in-out infinite;
+    }
+    .chat-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    .chat-quick-replies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .chat-qr {
+      background: var(--primary-xlight);
+      border: 1px solid rgba(29,78,216,0.2);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .chat-qr:hover { background: var(--primary); color: white; }
+
+    .chat-input-area {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      background: var(--surface);
+    }
+    #chat-input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      resize: none;
+      transition: border-color 0.2s;
+    }
+    #chat-input:focus { border-color: var(--primary); }
+    #chat-send {
+      width: 38px; height: 38px;
+      background: var(--primary);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    #chat-send:hover { background: #1e40af; transform: scale(1.05); }
+
+    /* Status bar */
+    #statusbar {
+      height: 26px;
+      background: var(--nav-bg);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+    .statusbar-item {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+    }
+    .statusbar-item span { color: rgba(255,255,255,0.6); }
+    .statusbar-right { margin-left: auto; color: rgba(255,255,255,0.25); font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+
+    /* Leaflet popup */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-sm) !important;
+      box-shadow: var(--shadow-lg) !important;
+      color: var(--text) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+
+    /* Loading */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(240,244,248,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      backdrop-filter: blur(4px);
+    }
+    .loading-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 32px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border-2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    .loading-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--primary);
+      letter-spacing: 2px;
+    }
+    .loading-sub {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    /* Animations for page entry */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeSlideUp 0.4s ease forwards;
+    }
+
+    /* Govt inspired decorative strip */
+    .govt-stripe {
+      height: 3px;
+      background: linear-gradient(90deg, #ff9933 0%, #ff9933 33%, #ffffff 33%, #ffffff 67%, #138808 67%, #138808 100%);
+    }
+
+    /* Priority action list */
+    .action-item {
+      display: flex;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .action-item:last-child { border-bottom: none; }
+    .action-num {
+      color: var(--accent-orange);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      min-width: 16px;
+      margin-top: 1px;
+    }
+    .action-text { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+<!-- LEFT NAVIGATION -->
+<nav id="nav">
+  <div class="nav-brand">
+    <div class="nav-brand-logo">
+      <div class="nav-brand-icon">🌊</div>
+      <div>
+        <div class="nav-brand-name">BhilaiFlood</div>
+      </div>
+    </div>
+    <div class="nav-brand-sub">ICCC · Intelligence Platform</div>
+    <div class="nav-location">
+      <div class="nav-location-dot"></div>
+      <div class="nav-location-text"><strong>Bhilai</strong>, Chhattisgarh</div>
+    </div>
+  </div>
+
+  <div class="nav-menu">
+    <div class="nav-section-label">Main</div>
+
+    <div class="nav-item active" onclick="switchView('dashboard')" id="nav-dashboard">
+      <span class="nav-item-icon">🗺️</span>
+      <span class="nav-item-label">Dashboard</span>
+      <span class="nav-item-badge" id="high-risk-badge">3</span>
+    </div>
+
+    <div class="nav-item" onclick="switchView('budget')" id="nav-budget">
+      <span class="nav-item-icon">💰</span>
+      <span class="nav-item-label">Budget</span>
+    </div>
+
+    <div class="nav-item" onclick="switchView('report')" id="nav-report">
+      <span class="nav-item-icon">📊</span>
+      <span class="nav-item-label">Reports</span>
+    </div>
+
+    <div class="nav-section-label">System</div>
+
+    <div class="nav-item" onclick="switchView('settings')" id="nav-settings">
+      <span class="nav-item-icon">⚙️</span>
+      <span class="nav-item-label">Settings</span>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <div class="nav-footer-status">
+      <div class="nav-footer-status-dot"></div>
+      <div class="nav-footer-status-text">Status: <strong>Online</strong></div>
+    </div>
+    <div class="nav-time" id="nav-clock">--:--:--</div>
+  </div>
+</nav>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="govt-stripe"></div>
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <span class="topbar-title">Bhilai Municipal Corporation</span>
+    <span class="topbar-sub">Flood Intelligence</span>
+    <div class="topbar-divider"></div>
+    <span class="topbar-badge">Monsoon 2025</span>
+    <span class="topbar-badge live">ICCC Live</span>
+    <div class="topbar-actions">
+      <button class="topbar-btn" onclick="loadAllData()">⟳ Refresh</button>
+      <button class="topbar-btn primary">⬇ Export</button>
+    </div>
+  </div>
+
+  <!-- VIEWS -->
+  <div id="views-container">
+
+    <!-- DASHBOARD VIEW -->
+    <div class="view active" id="view-dashboard">
+
+      <!-- Left sidebar -->
+      <div id="dash-sidebar">
+        <div class="sidebar-label">City Metrics</div>
+
+        <div class="stat-card blue">
+          <div class="stat-card-label">City Readiness</div>
+          <div class="stat-card-value blue" id="m-readiness">—</div>
+          <div class="stat-card-sub">/ 100 composite</div>
+        </div>
+
+        <div class="stat-card red">
+          <div class="stat-card-label">High Risk Wards</div>
+          <div class="stat-card-value red" id="m-highrisk">—</div>
+          <div class="stat-card-sub">need immediate action</div>
+        </div>
+
+        <div class="stat-card orange">
+          <div class="stat-card-label">Flood Hotspots</div>
+          <div class="stat-card-value orange" id="m-hotspots">—</div>
+          <div class="stat-card-sub">active zones detected</div>
+        </div>
+
+        <div class="stat-card green">
+          <div class="stat-card-label">Drains at Risk</div>
+          <div class="stat-card-value blue" id="m-drains">—</div>
+          <div class="stat-card-sub">health index &lt;50</div>
+        </div>
+
+        <div class="sidebar-label" style="margin-top:4px">Map Layers</div>
+        <div>
+          <div class="layer-toggle" onclick="toggleLayer('wards')">
+            <div class="layer-name"><div class="layer-dot" style="background:#3b82f6"></div>Ward Readiness</div>
+            <div class="toggle-switch on" id="lt-wards"></div>
+          </div>
+          <div class="layer-toggle" onclick="toggleLayer('hotspots')">
+            <div class="layer-name"><div class="layer-dot" style="background:#dc2626"></div>Flood Hotspots</div>
+            <div class="toggle-switch on" id="lt-hotspots"></div>
+          </div>
+          <div class="layer-toggle" onclick="toggleLayer('drains')">
+            <div class="layer-name"><div class="layer-dot" style="background:#d97706"></div>Drain Health</div>
+            <div class="toggle-switch on" id="lt-drains"></div>
+          </div>
+          <div class="layer-toggle" onclick="toggleLayer('route')">
+            <div class="layer-name"><div class="layer-dot" style="background:#059669"></div>Safe Route</div>
+            <div class="toggle-switch" id="lt-route"></div>
+          </div>
+        </div>
+
+        <div class="sidebar-label" style="margin-top:4px">Legend</div>
+        <div>
+          <div class="legend-item"><div class="legend-color" style="background:#166534"></div>Ready (80–100)</div>
+          <div class="legend-item"><div class="legend-color" style="background:#92400e"></div>Moderate (60–79)</div>
+          <div class="legend-item"><div class="legend-color" style="background:#991b1b"></div>High Risk (&lt;60)</div>
+        </div>
+        <div class="sidebar-label" style="margin-top:6px">Hotspot Intensity</div>
+        <div>
+          <div class="legend-item"><div class="legend-color" style="background:#ef4444"></div>High</div>
+          <div class="legend-item"><div class="legend-color" style="background:#f97316"></div>Medium</div>
+          <div class="legend-item"><div class="legend-color" style="background:#fbbf24"></div>Low</div>
+        </div>
+
+        <div class="sidebar-label" style="margin-top:4px">Top Risk Wards</div>
+        <div id="ward-list"></div>
+      </div>
+
+      <!-- Map -->
+      <div id="map-wrapper">
+        <div id="map"></div>
+
+        <!-- Route tool overlay -->
+        <div class="map-overlay-card route-tool">
+          <div class="overlay-title">🚨 Safe Route Planner</div>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">FORMAT: lat,lon</div>
+          <input class="route-input" id="route-src" placeholder="Source (e.g. 21.209,81.378)" value="21.209,81.378">
+          <input class="route-input" id="route-dst" placeholder="Destination" value="21.230,81.400">
+          <button class="btn-primary" onclick="computeRoute()">Compute Safe Route</button>
+          <button class="btn-secondary" onclick="clearRoute()">Clear Route</button>
+          <div id="route-result" style="display:none" class="route-result">
+            <div class="route-result-row"><span>Distance</span><span id="r-dist">—</span></div>
+            <div class="route-result-row"><span>Est. Time</span><span id="r-time">—</span></div>
+            <div class="route-result-row"><span>Zones Avoided</span><span id="r-zones">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div id="dash-panel">
+        <div class="panel-tabs">
+          <div class="panel-tab active" onclick="switchPanel('twin')" id="pt-twin">Digital Twin</div>
+          <div class="panel-tab" onclick="switchPanel('ward')" id="pt-ward">Ward Detail</div>
+        </div>
+
+        <!-- Digital Twin -->
+        <div class="panel-body" id="pp-twin">
+          <div class="sidebar-label" style="margin-bottom:10px">SELECT WARD</div>
+          <select class="dt-ward-selector" id="dt-ward-sel" onchange="onWardSelect()">
+            <option value="">— Select Ward —</option>
+          </select>
+
+          <div class="sidebar-label" style="margin-bottom:10px">INTERVENTIONS</div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">🔧 Drain Cleaning</span>
+              <span class="slider-value" id="sv-dc">0%</span>
+            </div>
+            <input type="range" class="slider" id="sl-dc" min="0" max="100" value="0" oninput="onSlider('dc',this.value)">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">⚡ Pump Deployment</span>
+              <span class="slider-value" id="sv-pd">0%</span>
+            </div>
+            <input type="range" class="slider" id="sl-pd" min="0" max="100" value="0" oninput="onSlider('pd',this.value)">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">🏗️ New Drains</span>
+              <span class="slider-value" id="sv-nd">0%</span>
+            </div>
+            <input type="range" class="slider" id="sl-nd" min="0" max="100" value="0" oninput="onSlider('nd',this.value)">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">🛣️ Road Elevation Fix</span>
+              <span class="slider-value" id="sv-rf">0%</span>
+            </div>
+            <input type="range" class="slider" id="sl-rf" min="0" max="100" value="0" oninput="onSlider('rf',this.value)">
+          </div>
+
+          <div id="dt-loading" style="display:none" class="dt-loading">
+            <div class="dt-spinner"></div> Simulating...
+          </div>
+
+          <div id="dt-result-panel" style="display:none">
+            <div class="dt-result-box">
+              <div class="dt-result-title">// Simulation Output</div>
+              <div class="dt-score-display">
+                <div class="dt-score-before" id="dt-score-before">—</div>
+                <div class="dt-arrow">→</div>
+                <div class="dt-score-after" id="dt-score-after">—</div>
+                <div class="dt-gain" id="dt-gain">+0.0</div>
+              </div>
+              <div style="font-size:10px;color:var(--text-3);margin-bottom:8px">READINESS SCORE</div>
+              <div class="impact-row"><span class="impact-label">Flood Risk Reduction</span><span class="impact-val" id="dt-frr">—</span></div>
+              <div class="impact-row"><span class="impact-label">Hotspots Downgraded</span><span class="impact-val" id="dt-hsd">—</span></div>
+              <div class="impact-row"><span class="impact-label">Drain Health Boost</span><span class="impact-val" id="dt-dhb">—</span></div>
+            </div>
+          </div>
+          <div id="dt-empty" class="panel-empty">Select a ward to begin<br>Digital Twin simulation</div>
+        </div>
+
+        <!-- Ward Detail -->
+        <div class="panel-body" id="pp-ward" style="display:none">
+          <div id="ward-detail-empty" class="panel-empty">Click a ward on the map<br>to view details</div>
+          <div id="ward-detail-content" style="display:none">
+            <div class="ward-detail-card">
+              <div class="ward-detail-name" id="wd-name">—</div>
+              <div class="ward-detail-score" id="wd-score" style="color:var(--primary)">—</div>
+              <div class="ward-detail-cat" id="wd-cat">—</div>
+            </div>
+            <div class="chart-wrap">
+              <div class="sidebar-label" style="margin-bottom:8px">Component Scores</div>
+              <canvas id="ward-chart"></canvas>
+            </div>
+            <div class="sidebar-label" style="margin-bottom:8px">Priority Actions</div>
+            <div id="wd-actions"></div>
+            <div style="height:10px"></div>
+            <div class="sidebar-label" style="margin-bottom:6px">Demographics</div>
+            <div id="wd-stats"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUDGET VIEW -->
+    <div class="view" id="view-budget">
+      <div class="view-header">
+        <div class="view-title">💰 Budget Optimizer</div>
+        <div class="view-subtitle">Bhilai flood intervention planning & resource allocation</div>
+      </div>
+      <div class="budget-grid">
+        <div class="card">
+          <div class="card-title">Budget Configuration</div>
+          <div class="budget-input-row">
+            <input class="budget-input" id="budget-input" type="number" placeholder="Total Budget (₹)" value="10000000">
+            <button class="btn-sm" onclick="runBudget()">Optimize</button>
+          </div>
+          <div class="budget-stats-grid" id="budget-summary" style="display:none">
+            <div class="budget-stat-card"><div class="budget-stat-label">Utilized</div><div class="budget-stat-val" id="bs-used">—</div></div>
+            <div class="budget-stat-card"><div class="budget-stat-label">Wards Covered</div><div class="budget-stat-val" id="bs-wards">—</div></div>
+            <div class="budget-stat-card"><div class="budget-stat-label">Readiness Gain</div><div class="budget-stat-val" id="bs-rg">—</div></div>
+            <div class="budget-stat-card"><div class="budget-stat-label">Risk Reduction</div><div class="budget-stat-val" id="bs-rr">—</div></div>
+          </div>
+          <div id="budget-table-wrap" style="display:none">
+            <table class="intervention-table">
+              <thead><tr><th>Intervention</th><th>Ward</th><th>Cost</th><th>Gain</th></tr></thead>
+              <tbody id="budget-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Risk Reduction by Category</div>
+          <canvas id="budget-chart" style="max-height:320px"></canvas>
+          <div class="panel-empty" id="budget-chart-empty">Run optimizer to see results</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT VIEW -->
+    <div class="view" id="view-report">
+      <div class="view-header">
+        <div class="view-title">📊 Flood Preparedness Report</div>
+        <div class="view-subtitle">Bhilai Municipal Corporation — Monsoon 2025 Assessment</div>
+      </div>
+      <div class="report-grid">
+        <div class="report-stat" data-emoji="🏘️">
+          <div class="report-stat-label">Total Wards</div>
+          <div class="report-stat-val" id="rp-total-wards">—</div>
+          <div class="report-stat-sub">under monitoring</div>
+        </div>
+        <div class="report-stat" data-emoji="⚠️">
+          <div class="report-stat-label">High Risk Wards</div>
+          <div class="report-stat-val" id="rp-high-risk" style="color:var(--accent-red)">—</div>
+          <div class="report-stat-sub">require priority action</div>
+        </div>
+        <div class="report-stat" data-emoji="💧">
+          <div class="report-stat-label">Avg Readiness</div>
+          <div class="report-stat-val" id="rp-avg-readiness" style="color:var(--primary)">—</div>
+          <div class="report-stat-sub">composite score</div>
+        </div>
+        <div class="report-stat" data-emoji="🔴">
+          <div class="report-stat-label">Active Hotspots</div>
+          <div class="report-stat-val" id="rp-hotspots" style="color:var(--accent-orange)">—</div>
+          <div class="report-stat-sub">flood risk zones</div>
+        </div>
+        <div class="report-stat" data-emoji="🌊">
+          <div class="report-stat-label">Drains Monitored</div>
+          <div class="report-stat-val" id="rp-drains" style="color:var(--accent-teal)">—</div>
+          <div class="report-stat-sub">across city network</div>
+        </div>
+        <div class="report-stat" data-emoji="🏢">
+          <div class="report-stat-label">Population at Risk</div>
+          <div class="report-stat-val" id="rp-pop" style="color:var(--accent-violet)">—</div>
+          <div class="report-stat-sub">in high-risk zones</div>
+        </div>
+      </div>
+      <div class="report-2col">
+        <div class="card">
+          <div class="card-title">Ward Risk Ranking</div>
+          <div id="report-ward-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Readiness Distribution</div>
+          <canvas id="report-chart" style="max-height:300px"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div class="view" id="view-settings">
+      <div class="view-header">
+        <div class="view-title">⚙️ Settings</div>
+        <div class="view-subtitle">Configure BhilaiFlood ICCC platform preferences</div>
+      </div>
+      <div class="settings-grid">
+        <div class="card">
+          <div class="settings-section-title">Alerts & Notifications</div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Flood Alerts</div><div class="settings-item-sub">Get notified for high-risk flood zones</div></div>
+            <div class="settings-toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">SMS Alerts</div><div class="settings-item-sub">Send SMS to registered numbers</div></div>
+            <div class="settings-toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Email Reports</div><div class="settings-item-sub">Weekly preparedness report</div></div>
+            <div class="settings-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-section-title" style="margin-top:16px">Data & Refresh</div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Auto-Refresh</div><div class="settings-item-sub">Refresh map data automatically</div></div>
+            <div class="settings-toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Refresh Interval</div><div class="settings-item-sub">How often to refresh live data</div></div>
+            <select class="settings-select">
+              <option>30 seconds</option>
+              <option>1 minute</option>
+              <option selected>5 minutes</option>
+              <option>15 minutes</option>
+            </select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="settings-section-title">Map Preferences</div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Map Theme</div><div class="settings-item-sub">Choose map tile style</div></div>
+            <select class="settings-select">
+              <option selected>Light (CartoDB)</option>
+              <option>Satellite</option>
+              <option>OpenStreetMap</option>
+            </select>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Show Popup on Click</div><div class="settings-item-sub">Show ward details on map click</div></div>
+            <div class="settings-toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-section-title" style="margin-top:16px">Platform Info</div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Platform</div><div class="settings-item-sub">BhilaiFlood ICCC v2.1.0</div></div>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">City</div><div class="settings-item-sub">Bhilai Municipal Corporation, Chhattisgarh</div></div>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">API Server</div><div class="settings-item-sub" id="sb-api">Connecting...</div></div>
+          </div>
+          <div class="settings-item">
+            <div><div class="settings-item-label">Backend</div><div class="settings-item-sub">FastAPI + Python</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <div class="statusbar-item">SYS: <span>OPERATIONAL</span></div>
+    <div class="statusbar-item">WARDS: <span id="sb-wards">—</span></div>
+    <div class="statusbar-item">DRAINS: <span id="sb-drains">—</span></div>
+    <div class="statusbar-right">Bhilai Municipal Corporation · Chhattisgarh · Monsoon 2025</div>
+  </div>
+</div>
+
+<!-- AI CHATBOT -->
+<div id="chatbot-bubble">
+  <button class="chat-fab" onclick="toggleChat()" id="chat-fab-btn">
+    <span id="chat-fab-icon">🤖</span>
+    <span class="chat-fab-badge" id="chat-badge">1</span>
+  </button>
+</div>
+
+<div id="chat-panel">
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">FloodBot AI</div>
+      <div class="chat-header-status">Bhilai ICCC Assistant · Online</div>
+    </div>
+    <button class="chat-header-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div id="chat-messages">
+    <div class="chat-msg bot">
+      <div class="chat-msg-bubble">
+        🙏 Jai Chhattisgarh! I'm <strong>FloodBot</strong>, your AI assistant for Bhilai Municipal Corporation's flood intelligence platform. How can I help you today?
+      </div>
+      <div class="chat-quick-replies">
+        <span class="chat-qr" onclick="sendQuickReply('What are the high risk wards?')">High Risk Wards</span>
+        <span class="chat-qr" onclick="sendQuickReply('Show me flood hotspots in Bhilai')">Flood Hotspots</span>
+        <span class="chat-qr" onclick="sendQuickReply('How to improve city readiness?')">Improve Readiness</span>
+        <span class="chat-qr" onclick="sendQuickReply('What is the budget optimizer?')">Budget Help</span>
+      </div>
+      <div class="chat-msg-time">Just now</div>
+    </div>
+  </div>
+  <div class="chat-input-area">
+    <input id="chat-input" placeholder="Ask about Bhilai flood data..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button id="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+
+let map, wardLayer, hotspotLayer, drainLayer, routeLayer;
+let wardData = null, hotspotData = null, drainData = null;
+let layerState = { wards: true, hotspots: true, drains: true, route: false };
+let simDebounce = null;
+let wardChart = null, budgetChart = null, reportChart = null;
+let selectedWard = null;
+let currentPanel = 'twin';
+let chatOpen = false;
+
+// Bhilai, Chhattisgarh center
+const BHILAI = [21.209, 81.378];
+
+// ─── CLOCK ───
+function initClock() {
+  setInterval(() => {
+    const now = new Date();
+    const t = now.toLocaleTimeString('en-IN', { hour12: false });
+    document.getElementById('nav-clock').textContent = t;
+  }, 1000);
+}
+
+// ─── MAP ───
+function initMap() {
+  map = L.map('map', {
+    center: BHILAI,
+    zoom: 13,
+    zoomControl: false,
+    attributionControl: false,
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© CARTO',
+    maxZoom: 19,
+  }).addTo(map);
+
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  wardLayer = L.layerGroup().addTo(map);
+  hotspotLayer = L.layerGroup().addTo(map);
+  drainLayer = L.layerGroup().addTo(map);
+  routeLayer = L.layerGroup();
+}
+
+// ─── DATA LOADING ───
+async function loadAllData() {
+  showLoading(true);
+  try {
+    const [wResp, hResp, dResp] = await Promise.all([
+      fetch(`${API}/ward-readiness`),
+      fetch(`${API}/flood-hotspots`),
+      fetch(`${API}/drain-intelligence`),
+    ]);
+
+    if (!wResp.ok || !hResp.ok || !dResp.ok) throw new Error('API error');
+
+    wardData = await wResp.json();
+    hotspotData = await hResp.json();
+    drainData = await dResp.json();
+
+    renderWards();
+    renderHotspots();
+    renderDrains();
+    updateMetrics();
+    updateWardList();
+    populateWardSelector();
+    updateStatusBar();
+    updateReportData();
+    document.getElementById('sb-api').textContent = 'CONNECTED ✓';
+  } catch(e) {
+    console.warn('API unavailable — using mock data for Bhilai');
+    loadMockData();
+    document.getElementById('sb-api').textContent = 'OFFLINE (DEMO)';
+  }
+  showLoading(false);
+}
+
+// ─── MOCK DATA (Bhilai wards) ───
+function loadMockData() {
+  const bhilaiWards = [
+    'Sector 1', 'Sector 2', 'Sector 4', 'Sector 6', 'Sector 7',
+    'Sector 9', 'Sector 10', 'Charoda', 'Hudco', 'Smriti Nagar',
+    'Risali', 'Nehru Nagar', 'Supela', 'Jamul', 'Kumhari'
+  ];
+  const offsets = [
+    [0.01,0.02],[0.02,-0.01],[-0.01,0.03],[0.03,0.01],[-0.02,-0.02],
+    [0.04,0.02],[0.00,-0.03],[-0.03,0.01],[0.02,0.04],[-0.01,-0.04],
+    [0.05,0.00],[-0.04,0.02],[0.01,0.05],[0.03,-0.03],[-0.02,0.03]
+  ];
+
+  wardData = { wards: bhilaiWards.map((name, i) => {
+    const score = 40 + Math.random() * 55;
+    return {
+      ward_id: `BH-W${String(i+1).padStart(2,'0')}`,
+      ward_name: name,
+      readiness_score: parseFloat(score.toFixed(1)),
+      risk_category: score < 55 ? 'High Risk' : score < 70 ? 'Moderate' : 'Ready',
+      population: Math.floor(8000 + Math.random() * 20000),
+      area_sqkm: parseFloat((1.2 + Math.random() * 3).toFixed(2)),
+      latitude: BHILAI[0] + offsets[i][0],
+      longitude: BHILAI[1] + offsets[i][1],
+      component_scores: {
+        drainage_health: 30 + Math.random() * 60,
+        flood_exposure: 20 + Math.random() * 70,
+        historical_flooding: 30 + Math.random() * 65,
+        accessibility: 50 + Math.random() * 45,
+        infrastructure_vulnerability: 25 + Math.random() * 70,
+      },
+      priority_actions: [
+        'Desilt main drainage channel before June 2025',
+        'Install additional stormwater pumps at low-lying areas',
+        'Repair damaged culverts near Bhilai Steel Plant road',
+      ]
+    };
+  }), city_avg_readiness: 61.3, total_wards: 15, high_risk_count: 3 };
+
+  hotspotData = { hotspots: Array.from({length:10}, (_,i) => ({
+    latitude: BHILAI[0] + (Math.random()-0.5)*0.08,
+    longitude: BHILAI[1] + (Math.random()-0.5)*0.10,
+    intensity: ['High','Medium','Low'][Math.floor(Math.random()*3)],
+    area_name: `Zone ${i+1}`,
+    risk_score: 40 + Math.random() * 55,
+  }))};
+
+  drainData = { drains: Array.from({length:25}, (_,i) => ({
+    drain_id: `BD${i+1}`,
+    latitude: BHILAI[0] + (Math.random()-0.5)*0.07,
+    longitude: BHILAI[1] + (Math.random()-0.5)*0.09,
+    health_index: 20 + Math.random() * 75,
+    capacity_utilization: 30 + Math.random() * 65,
+  }))};
+
+  renderWards();
+  renderHotspots();
+  renderDrains();
+  updateMetrics();
+  updateWardList();
+  populateWardSelector();
+  updateStatusBar();
+  updateReportData();
+}
+
+function readinessColor(score) {
+  if (score >= 80) return ['#166534', '#059669'];
+  if (score >= 60) return ['#92400e', '#d97706'];
+  return ['#991b1b', '#dc2626'];
+}
+
+function renderWards() {
+  wardLayer.clearLayers();
+  if (!wardData) return;
+  wardData.wards.forEach(w => {
+    const [bg, border] = readinessColor(w.readiness_score);
+    const circle = L.circleMarker([w.latitude, w.longitude], {
+      radius: 18,
+      fillColor: bg,
+      color: border,
+      weight: 2,
+      opacity: 0.9,
+      fillOpacity: 0.5,
+    });
+    circle.bindPopup(`
+      <div style="font-family:'DM Sans',sans-serif;min-width:160px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">${w.ward_name}</div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:6px">${w.ward_id} · ${w.risk_category}</div>
+        <div style="font-size:20px;font-weight:700;color:${border}">${w.readiness_score.toFixed(1)}<span style="font-size:11px;color:#94a3b8">/100</span></div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">Pop: ${w.population.toLocaleString()}</div>
+      </div>
+    `);
+    circle.on('click', () => showWardDetail(w));
+    wardLayer.addLayer(circle);
+  });
+}
+
+function renderHotspots() {
+  hotspotLayer.clearLayers();
+  if (!hotspotData) return;
+  const colorMap = { 'High': '#ef4444', 'Medium': '#f97316', 'Low': '#fbbf24' };
+  hotspotData.hotspots.forEach(h => {
+    const c = colorMap[h.intensity] || '#ef4444';
+    hotspotLayer.addLayer(L.circleMarker([h.latitude, h.longitude], {
+      radius: 8,
+      fillColor: c,
+      color: c,
+      weight: 1.5,
+      fillOpacity: 0.6,
+      opacity: 0.9,
+    }).bindPopup(`<div style="font-family:'DM Sans',sans-serif"><b>${h.area_name}</b><br><span style="color:${c};font-weight:600">${h.intensity} Risk</span><br><span style="font-size:11px;color:#64748b">Score: ${h.risk_score.toFixed(0)}</span></div>`));
+  });
+}
+
+function renderDrains() {
+  drainLayer.clearLayers();
+  if (!drainData) return;
+  drainData.drains.forEach(d => {
+    const c = d.health_index >= 70 ? '#059669' : d.health_index >= 50 ? '#d97706' : '#dc2626';
+    drainLayer.addLayer(L.circleMarker([d.latitude, d.longitude], {
+      radius: 4,
+      fillColor: c,
+      color: c,
+      weight: 1,
+      fillOpacity: 0.8,
+    }));
+  });
+}
+
+function updateMetrics() {
+  if (!wardData) return;
+  const avg = wardData.city_avg_readiness || wardData.wards.reduce((s,w) => s+w.readiness_score, 0)/wardData.wards.length;
+  const highRisk = wardData.high_risk_count || wardData.wards.filter(w => w.readiness_score < 60).length;
+  document.getElementById('m-readiness').textContent = avg.toFixed(1);
+  document.getElementById('m-highrisk').textContent = highRisk;
+  document.getElementById('m-hotspots').textContent = hotspotData ? hotspotData.hotspots.length : '—';
+  document.getElementById('m-drains').textContent = drainData ? drainData.drains.filter(d => d.health_index < 50).length : '—';
+  document.getElementById('high-risk-badge').textContent = highRisk;
+}
+
+function updateWardList() {
+  if (!wardData) return;
+  const sorted = [...wardData.wards].sort((a, b) => a.readiness_score - b.readiness_score).slice(0, 6);
+  document.getElementById('ward-list').innerHTML = sorted.map(w => {
+    const [, c] = readinessColor(w.readiness_score);
+    return `<div class="ward-risk-item" onclick="showWardDetail(${JSON.stringify(w).replace(/"/g,'&quot;')})">
+      <div class="ward-risk-name">${w.ward_name}</div>
+      <div class="ward-risk-score" style="color:${c}">${w.readiness_score.toFixed(0)}</div>
+    </div>`;
+  }).join('');
+}
+
+function populateWardSelector() {
+  if (!wardData) return;
+  const sel = document.getElementById('dt-ward-sel');
+  sel.innerHTML = '<option value="">— Select Ward —</option>' +
+    wardData.wards.map(w => `<option value="${w.ward_id}">${w.ward_name}</option>`).join('');
+}
+
+function updateStatusBar() {
+  document.getElementById('sb-wards').textContent = wardData ? wardData.wards.length : '—';
+  document.getElementById('sb-drains').textContent = drainData ? drainData.drains.length : '—';
+}
+
+function updateReportData() {
+  if (!wardData) return;
+  const wards = wardData.wards;
+  const totalPop = wards.filter(w => w.risk_category === 'High Risk').reduce((s,w) => s + w.population, 0);
+  const avg = wards.reduce((s,w) => s + w.readiness_score, 0) / wards.length;
+
+  document.getElementById('rp-total-wards').textContent = wards.length;
+  document.getElementById('rp-high-risk').textContent = wards.filter(w => w.readiness_score < 60).length;
+  document.getElementById('rp-avg-readiness').textContent = avg.toFixed(1);
+  document.getElementById('rp-hotspots').textContent = hotspotData ? hotspotData.hotspots.length : '—';
+  document.getElementById('rp-drains').textContent = drainData ? drainData.drains.length : '—';
+  document.getElementById('rp-pop').textContent = (totalPop/1000).toFixed(0) + 'K';
+
+  const sorted = [...wards].sort((a,b) => a.readiness_score - b.readiness_score);
+  document.getElementById('report-ward-list').innerHTML = sorted.map((w, i) => {
+    const [, c] = readinessColor(w.readiness_score);
+    const cls = w.readiness_score < 60 ? 'badge-high' : w.readiness_score < 80 ? 'badge-mod' : 'badge-low';
+    const cat = w.readiness_score < 60 ? 'High Risk' : w.readiness_score < 80 ? 'Moderate' : 'Ready';
+    return `<div class="report-list-item">
+      <div class="report-list-left">
+        <div class="report-list-rank">#${i+1}</div>
+        <div>
+          <div class="report-list-name">${w.ward_name}</div>
+          <div class="report-progress"><div class="report-progress-fill" style="width:${w.readiness_score}%;background:${c}"></div></div>
+        </div>
+      </div>
+      <span class="badge ${cls}">${cat}</span>
+    </div>`;
+  }).join('');
+
+  const ctx = document.getElementById('report-chart').getContext('2d');
+  if (reportChart) reportChart.destroy();
+  const ready = wards.filter(w => w.readiness_score >= 80).length;
+  const moderate = wards.filter(w => w.readiness_score >= 60 && w.readiness_score < 80).length;
+  const high = wards.filter(w => w.readiness_score < 60).length;
+  reportChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Ready', 'Moderate', 'High Risk'],
+      datasets: [{
+        data: [ready, moderate, high],
+        backgroundColor: ['#059669', '#d97706', '#dc2626'],
+        borderWidth: 0,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      plugins: { legend: { labels: { color: '#334155', font: { family: 'DM Sans', size: 12 } } } },
+      cutout: '65%',
+    }
+  });
+}
+
+// ─── LAYER TOGGLES ───
+function toggleLayer(layer) {
+  layerState[layer] = !layerState[layer];
+  const el = document.getElementById(`lt-${layer}`);
+  if (el) el.classList.toggle('on', layerState[layer]);
+  const layerMap = { wards: wardLayer, hotspots: hotspotLayer, drains: drainLayer, route: routeLayer };
+  const target = layerMap[layer];
+  if (!target || !map) return; // guard: map/layers not ready yet
+  try {
+    if (layerState[layer]) { target.addTo(map); }
+    else { target.remove(); }
+  } catch(e) {
+    console.warn('toggleLayer error:', e);
+  }
+}
+
+// ─── DIGITAL TWIN ───
+function onWardSelect() {
+  const id = document.getElementById('dt-ward-sel').value;
+  if (!id || !wardData) return;
+  selectedWard = wardData.wards.find(w => w.ward_id === id);
+  document.getElementById('dt-empty').style.display = 'none';
+  runSimulation();
+}
+
+function onSlider(key, val) {
+  document.getElementById(`sv-${key}`).textContent = val + '%';
+  clearTimeout(simDebounce);
+  simDebounce = setTimeout(runSimulation, 300);
+}
+
+async function runSimulation() {
+  if (!selectedWard) return;
+  document.getElementById('dt-loading').style.display = 'flex';
+  document.getElementById('dt-result-panel').style.display = 'none';
+  const dc = parseInt(document.getElementById('sl-dc').value);
+  const pd = parseInt(document.getElementById('sl-pd').value);
+  const nd = parseInt(document.getElementById('sl-nd').value);
+  const rf = parseInt(document.getElementById('sl-rf').value);
+  try {
+    const resp = await fetch(`${API}/digital-twin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ward_id: selectedWard.ward_id,
+        interventions: { drain_cleaning_pct: dc, pump_deployment_pct: pd, new_drains_pct: nd, road_elevation_fix_pct: rf }
+      })
+    });
+    const data = await resp.json();
+    displaySimResult(data.impact);
+  } catch {
+    const gain = ((dc * 0.25 + pd * 0.2 + nd * 0.3 + rf * 0.15) * 0.1).toFixed(1);
+    displaySimResult({
+      readiness_gain: parseFloat(gain),
+      flood_risk_reduction_pct: Math.round(gain * 4),
+      hotspots_downgraded: Math.round(gain * 0.3),
+      drain_health_improvement: parseFloat((gain * 1.5).toFixed(1))
+    });
+  }
+  document.getElementById('dt-loading').style.display = 'none';
+  document.getElementById('dt-result-panel').style.display = 'block';
+}
+
+function displaySimResult(imp) {
+  const base = selectedWard.readiness_score;
+  document.getElementById('dt-score-before').textContent = base.toFixed(1);
+  document.getElementById('dt-score-after').textContent = Math.min(100, base + imp.readiness_gain).toFixed(1);
+  document.getElementById('dt-gain').textContent = `+${imp.readiness_gain.toFixed(1)}`;
+  document.getElementById('dt-frr').textContent = `${imp.flood_risk_reduction_pct}%`;
+  document.getElementById('dt-hsd').textContent = imp.hotspots_downgraded;
+  document.getElementById('dt-dhb').textContent = `+${imp.drain_health_improvement?.toFixed(1) || '—'} pts`;
+}
+
+// ─── ROUTE ───
+async function computeRoute() {
+  const srcVal = document.getElementById('route-src').value.split(',');
+  const dstVal = document.getElementById('route-dst').value.split(',');
+  if (srcVal.length < 2 || dstVal.length < 2) return;
+  try {
+    const resp = await fetch(`${API}/safe-route`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source_lat: parseFloat(srcVal[0]), source_lon: parseFloat(srcVal[1]),
+        dest_lat: parseFloat(dstVal[0]), dest_lon: parseFloat(dstVal[1]),
+      })
+    });
+    const data = await resp.json();
+    if (!routeLayer || !map) throw new Error('Map not ready');
+    routeLayer.clearLayers();
+    const line = L.geoJSON(data.safe_route_geojson, { style: { color: '#059669', weight: 4, opacity: 0.9 } });
+    routeLayer.addLayer(line);
+    if (!layerState.route) { layerState.route = true; routeLayer.addTo(map); document.getElementById('lt-route').classList.add('on'); }
+    document.getElementById('r-dist').textContent = `${data.distance_km} km`;
+    document.getElementById('r-time').textContent = `${data.estimated_time_min} min`;
+    document.getElementById('r-zones').textContent = data.avoided_flood_zones;
+    document.getElementById('route-result').style.display = 'block';
+    map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  } catch {
+    // Mock route
+    if (!routeLayer || !map) return;
+    const s = [parseFloat(srcVal[0]), parseFloat(srcVal[1])];
+    const e = [parseFloat(dstVal[0]), parseFloat(dstVal[1])];
+    routeLayer.clearLayers();
+    routeLayer.addLayer(L.polyline([s, [(s[0]+e[0])/2, (s[1]+e[1])/2 + 0.01], e], { color: '#059669', weight: 4 }));
+    if (!layerState.route) { layerState.route = true; routeLayer.addTo(map); document.getElementById('lt-route').classList.add('on'); }
+    document.getElementById('r-dist').textContent = '3.2 km';
+    document.getElementById('r-time').textContent = '9 min';
+    document.getElementById('r-zones').textContent = '2';
+    document.getElementById('route-result').style.display = 'block';
+  }
+}
+
+function clearRoute() {
+  if (routeLayer) routeLayer.clearLayers();
+  document.getElementById('route-result').style.display = 'none';
+}
+
+// ─── WARD DETAIL ───
+function showWardDetail(props) {
+  if (typeof props === 'string') props = JSON.parse(props.replace(/&quot;/g, '"'));
+  switchPanel('ward');
+  document.getElementById('ward-detail-empty').style.display = 'none';
+  document.getElementById('ward-detail-content').style.display = 'block';
+
+  const [, c] = readinessColor(props.readiness_score);
+  document.getElementById('wd-name').textContent = `${props.ward_name} · ${props.ward_id}`;
+  document.getElementById('wd-score').textContent = props.readiness_score.toFixed(1);
+  document.getElementById('wd-score').style.color = c;
+  document.getElementById('wd-cat').textContent = props.risk_category;
+
+  const ctx = document.getElementById('ward-chart').getContext('2d');
+  if (wardChart) wardChart.destroy();
+  const cs = props.component_scores;
+  wardChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Drainage', 'Flood Exp.', 'Historical', 'Access', 'Infra'],
+      datasets: [{
+        data: [cs.drainage_health, cs.flood_exposure, cs.historical_flooding, cs.accessibility, cs.infrastructure_vulnerability],
+        backgroundColor: 'rgba(29,78,216,0.1)',
+        borderColor: '#1d4ed8',
+        borderWidth: 2,
+        pointBackgroundColor: '#1d4ed8',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { display: false },
+          grid: { color: '#e2e8f0' },
+          angleLines: { color: '#e2e8f0' },
+          pointLabels: { color: '#64748b', font: { size: 10 } }
+        }
+      },
+      plugins: { legend: { display: false } },
+    }
+  });
+
+  document.getElementById('wd-actions').innerHTML = props.priority_actions.map((a, i) =>
+    `<div class="action-item"><div class="action-num">${i+1}.</div><div class="action-text">${a}</div></div>`
+  ).join('');
+
+  document.getElementById('wd-stats').innerHTML = `
+    <div class="impact-row"><span class="impact-label">Population</span><span class="impact-val">${props.population.toLocaleString()}</span></div>
+    <div class="impact-row"><span class="impact-label">Area</span><span class="impact-val">${props.area_sqkm} km²</span></div>
+  `;
+}
+
+// ─── BUDGET ───
+async function runBudget() {
+  const budget = parseFloat(document.getElementById('budget-input').value);
+  if (!budget || budget <= 0) return;
+  try {
+    const resp = await fetch(`${API}/optimize-budget`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ total_budget: budget })
+    });
+    displayBudgetResult(await resp.json());
+  } catch {
+    displayBudgetResult({
+      budget_utilized_inr: budget * 0.92,
+      wards_covered: 5,
+      total_readiness_gain: 12.4,
+      total_risk_reduction_pct: 28,
+      interventions: [
+        { intervention: 'Drain Cleaning', ward_name: 'Sector 1', cost_display: '₹8.2L', readiness_gain: 3.5 },
+        { intervention: 'Pump Deployment', ward_name: 'Charoda', cost_display: '₹12.5L', readiness_gain: 4.1 },
+        { intervention: 'New Drains', ward_name: 'Hudco', cost_display: '₹25L', readiness_gain: 5.2 },
+        { intervention: 'Road Elevation', ward_name: 'Sector 9', cost_display: '₹18L', readiness_gain: 3.8 },
+      ],
+      risk_reduction_by_category: [
+        { category: 'Drainage', risk_reduction_pct: 35 },
+        { category: 'Pumping', risk_reduction_pct: 28 },
+        { category: 'Infrastructure', risk_reduction_pct: 22 },
+        { category: 'Roads', risk_reduction_pct: 15 },
+      ]
+    });
+  }
+}
+
+function displayBudgetResult(data) {
+  document.getElementById('budget-summary').style.display = 'grid';
+  document.getElementById('bs-used').textContent = `₹${(data.budget_utilized_inr/1e6).toFixed(1)}M`;
+  document.getElementById('bs-wards').textContent = data.wards_covered;
+  document.getElementById('bs-rg').textContent = `+${data.total_readiness_gain}`;
+  document.getElementById('bs-rr').textContent = `${data.total_risk_reduction_pct}%`;
+
+  document.getElementById('budget-table-wrap').style.display = 'block';
+  document.getElementById('budget-table-body').innerHTML = data.interventions.map(iv =>
+    `<tr><td>${iv.intervention}</td><td>${iv.ward_name}</td><td class="cost-cell">${iv.cost_display}</td><td class="gain-cell">+${iv.readiness_gain}</td></tr>`
+  ).join('');
+
+  document.getElementById('budget-chart-empty').style.display = 'none';
+  const ctx = document.getElementById('budget-chart').getContext('2d');
+  if (budgetChart) budgetChart.destroy();
+  const cats = data.risk_reduction_by_category;
+  budgetChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: cats.map(c => c.category),
+      datasets: [{
+        label: 'Risk Reduction %',
+        data: cats.map(c => c.risk_reduction_pct),
+        backgroundColor: ['rgba(29,78,216,0.15)','rgba(8,145,178,0.15)','rgba(5,150,105,0.15)','rgba(217,119,6,0.15)'],
+        borderColor: ['#1d4ed8','#0891b2','#059669','#d97706'],
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+        y: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+}
+
+// ─── VIEW / PANEL SWITCHES ───
+function switchView(view) {
+  ['dashboard','budget','report','settings'].forEach(v => {
+    document.getElementById(`view-${v}`).classList.toggle('active', v === view);
+    document.getElementById(`nav-${v}`).classList.toggle('active', v === view);
+  });
+  if (view === 'dashboard') {
+    setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+  }
+}
+
+function switchPanel(panel) {
+  currentPanel = panel;
+  document.getElementById('pt-twin').classList.toggle('active', panel === 'twin');
+  document.getElementById('pt-ward').classList.toggle('active', panel === 'ward');
+  document.getElementById('pp-twin').style.display = panel === 'twin' ? 'block' : 'none';
+  document.getElementById('pp-ward').style.display = panel === 'ward' ? 'block' : 'none';
+}
+
+function showLoading(show) {
+  let overlay = document.getElementById('loading-overlay');
+  const container = document.getElementById('map-wrapper') || document.body;
+  if (show && !overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.className = 'loading-overlay';
+    overlay.innerHTML = `<div class="loading-card">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">INITIALIZING BHILAI ICCC</div>
+      <div class="loading-sub">Bhilai Municipal Corporation · Chhattisgarh</div>
+    </div>`;
+    container.appendChild(overlay);
+  } else if (!show && overlay) {
+    overlay.remove();
+  }
+}
+
+// ─── CHATBOT ───
+const botResponses = {
+  'high risk': 'Currently, there are <strong>3 high-risk wards</strong> in Bhilai that need immediate attention: Charoda, Hudco, and Sector 9 have readiness scores below 60. These areas face elevated flood risk during monsoon.',
+  'hotspot': 'There are <strong>10 active flood hotspots</strong> detected across Bhilai. The highest concentration is near low-lying areas in Charoda and Sector 9. I recommend checking the map layer for exact locations.',
+  'readiness': 'Bhilai\'s current city readiness score is approximately <strong>61.3/100</strong> — which is "Moderate". To improve this, priority interventions include drain cleaning, pump deployment in low-lying wards, and road elevation fixes.',
+  'budget': 'The Budget Optimizer helps allocate municipal funds efficiently. You can enter your total budget (in ₹) and the AI will recommend optimal interventions across wards to maximize flood risk reduction. Try the Budget tab!',
+  'bhilai': 'Bhilai is located in Durg district, Chhattisgarh. The city faces monsoon flood risks especially in low-lying wards near the Sheonath River and Bhilai Steel Plant area. This ICCC platform monitors all 15 wards.',
+  'drain': 'Currently monitoring <strong>25 drainage points</strong> across Bhilai. Several drains in Charoda and Risali have health indices below 50, indicating risk of overflow during heavy rainfall.',
+  'monsoon': 'Bhilai typically receives 1200-1400mm of annual rainfall, with peak monsoon from June-September. The ICCC platform tracks real-time flood readiness for all wards during this critical period.',
+  'default': 'I can help you with flood data for Bhilai, ward readiness scores, hotspot analysis, budget planning, and intervention recommendations. You can also use the Dashboard to explore the interactive map!'
+};
+
+function getBotReply(msg) {
+  msg = msg.toLowerCase();
+  for (const [key, reply] of Object.entries(botResponses)) {
+    if (msg.includes(key)) return reply;
+  }
+  return botResponses.default;
+}
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-panel').classList.toggle('open', chatOpen);
+  const fab = document.getElementById('chat-fab-btn');
+  fab.classList.toggle('open', chatOpen);
+  document.getElementById('chat-fab-icon').textContent = chatOpen ? '✕' : '🤖';
+  if (chatOpen) {
+    document.getElementById('chat-badge').style.display = 'none';
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addChatMsg(msg, 'user');
+  const typing = addTyping();
+  setTimeout(() => {
+    typing.remove();
+    addChatMsg(getBotReply(msg), 'bot');
+  }, 800 + Math.random() * 600);
+}
+
+function sendQuickReply(msg) {
+  document.getElementById('chat-input').value = msg;
+  sendChat();
+}
+
+function addChatMsg(msg, type) {
+  const msgs = document.getElementById('chat-messages');
+  const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const div = document.createElement('div');
+  div.className = `chat-msg ${type}`;
+  div.innerHTML = `<div class="chat-msg-bubble">${msg}</div><div class="chat-msg-time">${now}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg bot';
+  div.innerHTML = `<div class="chat-typing"><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+// ─── INIT ───
+function init() {
+  initClock();
+  initMap();
+  loadAllData();
+}
+
+init();
+</script>
+</body>
+</html>
