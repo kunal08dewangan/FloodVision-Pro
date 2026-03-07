@@ -63,7 +63,7 @@ Floodvision-Pro is a GIS-integrated decision-support system that enables Indian 
 ### 1. Clone / extract the project
 
 ```bash
-cd sovereign-flood
+cd FloodVision-Pro
 ```
 
 ### 2. Backend Setup
@@ -182,7 +182,7 @@ curl -X POST http://localhost:8000/simulate \
 ## 🗂️ Project Structure
 
 ```
-sovereign-flood/
+FloodVision-Pro/
 ├── backend/
 │   ├── main.py                    # FastAPI app + endpoints
 │   ├── requirements.txt
