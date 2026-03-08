@@ -43,6 +43,8 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { width: 100%; height: 100%; }
     
     body {
       background: var(--bg);
@@ -52,19 +54,70 @@
       overflow: hidden;
       height: 100vh;
       display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
     }
 
     /* ─── LEFT NAVIGATION ─── */
     #nav {
-      width: var(--nav-width);
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
       background: var(--nav-bg);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      flex-grow: 0;
       height: 100vh;
       position: relative;
       overflow: hidden;
       z-index: 100;
+      margin-left: -240px;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+    }
+    #nav.open {
+      margin-left: 0;
+    }
+    /* No overlay needed - nav pushes content */
+    #nav-overlay { display: none !important; }
+
+    /* Hamburger button */
+    #hamburger {
+      width: 42px;
+      height: 42px;
+      background: var(--nav-bg);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    #hamburger:hover { background: #1a2d47; transform: scale(1.05); }
+    #hamburger:active { transform: scale(0.95); }
+    .ham-line {
+      width: 18px;
+      height: 2px;
+      background: #ffffff;
+      border-radius: 2px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center;
+    }
+    /* Animate hamburger → X */
+    #hamburger.open .ham-line:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    #hamburger.open .ham-line:nth-child(2) {
+      opacity: 0; transform: scaleX(0);
+    }
+    #hamburger.open .ham-line:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
 
     #nav::before {
@@ -187,6 +240,8 @@
       color: rgba(255,255,255,0.5);
       position: relative;
       overflow: hidden;
+      white-space: nowrap;
+      width: 100%;
     }
     .nav-item::before {
       content: '';
@@ -280,10 +335,12 @@
     /* ─── MAIN CONTENT ─── */
     #app {
       flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       height: 100vh;
+      transition: none;
     }
 
     /* Top bar */
@@ -564,6 +621,26 @@
       transition: border-color 0.2s;
     }
     .route-input:focus { border-color: var(--primary); }
+    .route-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 8px 10px;
+      width: 100%;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+    .route-select:focus { border-color: var(--primary); }
+    .route-select option { font-size: 12px; }
     .btn-primary {
       background: var(--primary);
       border: none;
@@ -669,7 +746,7 @@
       font-weight: 500;
     }
     .slider {
-      -webkit-appearance: none;
+      appearance: none;
       width: 100%;
       height: 5px;
       border-radius: 3px;
@@ -1199,7 +1276,7 @@
       font-size: 18px;
       flex-shrink: 0;
     }
-    .chat-header-info {}
+    /* .chat-header-info {} */
     .chat-header-name {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 14px;
@@ -1518,6 +1595,11 @@
 
   <!-- TOP BAR -->
   <div id="topbar">
+    <button id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation">
+      <div class="ham-line"></div>
+      <div class="ham-line"></div>
+      <div class="ham-line"></div>
+    </button>
     <span class="topbar-title">Bhilai Municipal Corporation</span>
     <span class="topbar-sub">Flood Intelligence</span>
     <div class="topbar-divider"></div>
@@ -1607,12 +1689,20 @@
         <!-- Route tool overlay -->
         <div class="map-overlay-card route-tool">
           <div class="overlay-title">🚨 Safe Route Planner</div>
-          <div style="font-size:10px;color:var(--text-3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">FORMAT: lat,lon</div>
-          <input class="route-input" id="route-src" placeholder="Source (e.g. 21.209,81.378)" value="21.209,81.378">
-          <input class="route-input" id="route-dst" placeholder="Destination" value="21.230,81.400">
-          <button class="btn-primary" onclick="computeRoute()">Compute Safe Route</button>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">SELECT SOURCE &amp; DESTINATION WARD</div>
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;font-weight:500;">From Ward</div>
+          <select class="route-select" id="route-src">
+            <option value="">— Select Source Ward —</option>
+          </select>
+          <div style="font-size:11px;color:var(--text-3);margin:8px 0 4px;font-weight:500;">To Ward</div>
+          <select class="route-select" id="route-dst">
+            <option value="">— Select Destination Ward —</option>
+          </select>
+          <button class="btn-primary" style="margin-top:10px" onclick="computeRoute()">Compute Safe Route</button>
           <button class="btn-secondary" onclick="clearRoute()">Clear Route</button>
           <div id="route-result" style="display:none" class="route-result">
+            <div class="route-result-row"><span>From</span><span id="r-src-name" style="color:var(--primary);font-size:11px">—</span></div>
+            <div class="route-result-row"><span>To</span><span id="r-dst-name" style="color:var(--primary);font-size:11px">—</span></div>
             <div class="route-result-row"><span>Distance</span><span id="r-dist">—</span></div>
             <div class="route-result-row"><span>Est. Time</span><span id="r-time">—</span></div>
             <div class="route-result-row"><span>Zones Avoided</span><span id="r-zones">—</span></div>
@@ -1936,8 +2026,8 @@ function initClock() {
 // ─── MAP ───
 function initMap() {
   map = L.map('map', {
-    center: BHILAI,
-    zoom: 13,
+    center: [21.213, 81.393],  // Bhilai city center
+    zoom: 12,
     zoomControl: false,
     attributionControl: false,
   });
@@ -1978,6 +2068,7 @@ async function loadAllData() {
     populateWardSelector();
     updateStatusBar();
     updateReportData();
+    populateRouteSelects();
     document.getElementById('sb-api').textContent = 'CONNECTED ✓';
   } catch(e) {
     console.warn('API unavailable — using mock data for Bhilai');
@@ -1989,28 +2080,36 @@ async function loadAllData() {
 
 // ─── MOCK DATA (Bhilai wards) ───
 function loadMockData() {
-  const bhilaiWards = [
-    'Sector 1', 'Sector 2', 'Sector 4', 'Sector 6', 'Sector 7',
-    'Sector 9', 'Sector 10', 'Charoda', 'Hudco', 'Smriti Nagar',
-    'Risali', 'Nehru Nagar', 'Supela', 'Jamul', 'Kumhari'
-  ];
-  const offsets = [
-    [0.01,0.02],[0.02,-0.01],[-0.01,0.03],[0.03,0.01],[-0.02,-0.02],
-    [0.04,0.02],[0.00,-0.03],[-0.03,0.01],[0.02,0.04],[-0.01,-0.04],
-    [0.05,0.00],[-0.04,0.02],[0.01,0.05],[0.03,-0.03],[-0.02,0.03]
+  // Real approximate GPS coordinates for Bhilai/Durg wards (all within Bhilai city limits)
+  const bhilaiWardsData = [
+    { name: 'Sector 1',      lat: 21.2180, lon: 81.3950 },
+    { name: 'Sector 2',      lat: 21.2120, lon: 81.4020 },
+    { name: 'Sector 4',      lat: 21.2050, lon: 81.3880 },
+    { name: 'Sector 6',      lat: 21.1980, lon: 81.3820 },
+    { name: 'Sector 7',      lat: 21.1920, lon: 81.3760 },
+    { name: 'Sector 9',      lat: 21.2250, lon: 81.4100 },
+    { name: 'Sector 10',     lat: 21.2310, lon: 81.4050 },
+    { name: 'Charoda',       lat: 21.2400, lon: 81.3700 },
+    { name: 'Hudco',         lat: 21.2080, lon: 81.4150 },
+    { name: 'Smriti Nagar',  lat: 21.2150, lon: 81.4250 },
+    { name: 'Risali',        lat: 21.1850, lon: 81.3650 },
+    { name: 'Nehru Nagar',   lat: 21.2020, lon: 81.4080 },
+    { name: 'Supela',        lat: 21.1950, lon: 81.4180 },
+    { name: 'Jamul',         lat: 21.1750, lon: 81.3900 },
+    { name: 'Kumhari',       lat: 21.2550, lon: 81.3800 },
   ];
 
-  wardData = { wards: bhilaiWards.map((name, i) => {
+  wardData = { wards: bhilaiWardsData.map((w, i) => {
     const score = 40 + Math.random() * 55;
     return {
       ward_id: `BH-W${String(i+1).padStart(2,'0')}`,
-      ward_name: name,
+      ward_name: w.name,
       readiness_score: parseFloat(score.toFixed(1)),
       risk_category: score < 55 ? 'High Risk' : score < 70 ? 'Moderate' : 'Ready',
       population: Math.floor(8000 + Math.random() * 20000),
       area_sqkm: parseFloat((1.2 + Math.random() * 3).toFixed(2)),
-      latitude: BHILAI[0] + offsets[i][0],
-      longitude: BHILAI[1] + offsets[i][1],
+      latitude: w.lat,
+      longitude: w.lon,
       component_scores: {
         drainage_health: 30 + Math.random() * 60,
         flood_exposure: 20 + Math.random() * 70,
@@ -2050,6 +2149,7 @@ function loadMockData() {
   populateWardSelector();
   updateStatusBar();
   updateReportData();
+  populateRouteSelects();
 }
 
 function readinessColor(score) {
@@ -2278,17 +2378,40 @@ function displaySimResult(imp) {
 }
 
 // ─── ROUTE ───
+function populateRouteSelects() {
+  if (!wardData) return;
+  const srcSel = document.getElementById('route-src');
+  const dstSel = document.getElementById('route-dst');
+  const options = wardData.wards.map(w =>
+    `<option value="${w.ward_id}">${w.ward_name}</option>`
+  ).join('');
+  srcSel.innerHTML = '<option value="">— Select Source Ward —</option>' + options;
+  dstSel.innerHTML = '<option value="">— Select Destination Ward —</option>' + options;
+  // Default: first and second ward pre-selected
+  if (wardData.wards.length >= 2) {
+    srcSel.value = wardData.wards[0].ward_id;
+    dstSel.value = wardData.wards[1].ward_id;
+  }
+}
+
 async function computeRoute() {
-  const srcVal = document.getElementById('route-src').value.split(',');
-  const dstVal = document.getElementById('route-dst').value.split(',');
-  if (srcVal.length < 2 || dstVal.length < 2) return;
+  if (!wardData) return;
+  const srcId = document.getElementById('route-src').value;
+  const dstId = document.getElementById('route-dst').value;
+  if (!srcId || !dstId) { alert('Please select both source and destination wards.'); return; }
+  if (srcId === dstId) { alert('Source and destination wards must be different.'); return; }
+
+  const srcWard = wardData.wards.find(w => w.ward_id === srcId);
+  const dstWard = wardData.wards.find(w => w.ward_id === dstId);
+  if (!srcWard || !dstWard) return;
+
   try {
     const resp = await fetch(`${API}/safe-route`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        source_lat: parseFloat(srcVal[0]), source_lon: parseFloat(srcVal[1]),
-        dest_lat: parseFloat(dstVal[0]), dest_lon: parseFloat(dstVal[1]),
+        source_lat: srcWard.latitude, source_lon: srcWard.longitude,
+        dest_lat: dstWard.latitude, dest_lon: dstWard.longitude,
       })
     });
     const data = await resp.json();
@@ -2297,23 +2420,49 @@ async function computeRoute() {
     const line = L.geoJSON(data.safe_route_geojson, { style: { color: '#059669', weight: 4, opacity: 0.9 } });
     routeLayer.addLayer(line);
     if (!layerState.route) { layerState.route = true; routeLayer.addTo(map); document.getElementById('lt-route').classList.add('on'); }
+    document.getElementById('r-src-name').textContent = srcWard.ward_name;
+    document.getElementById('r-dst-name').textContent = dstWard.ward_name;
     document.getElementById('r-dist').textContent = `${data.distance_km} km`;
     document.getElementById('r-time').textContent = `${data.estimated_time_min} min`;
     document.getElementById('r-zones').textContent = data.avoided_flood_zones;
     document.getElementById('route-result').style.display = 'block';
     map.fitBounds(line.getBounds(), { padding: [20, 20] });
   } catch {
-    // Mock route
+    // Mock route using ward coordinates
     if (!routeLayer || !map) return;
-    const s = [parseFloat(srcVal[0]), parseFloat(srcVal[1])];
-    const e = [parseFloat(dstVal[0]), parseFloat(dstVal[1])];
+    const s = [srcWard.latitude, srcWard.longitude];
+    const e = [dstWard.latitude, dstWard.longitude];
+    const mid = [(s[0]+e[0])/2 + 0.005, (s[1]+e[1])/2 + 0.008];
     routeLayer.clearLayers();
-    routeLayer.addLayer(L.polyline([s, [(s[0]+e[0])/2, (s[1]+e[1])/2 + 0.01], e], { color: '#059669', weight: 4 }));
+    // Draw animated route line
+    routeLayer.addLayer(L.polyline([s, mid, e], {
+      color: '#059669', weight: 5, opacity: 0.9,
+      dashArray: null
+    }));
+    // Start marker
+    routeLayer.addLayer(L.circleMarker(s, {
+      radius: 8, fillColor: '#1d4ed8', color: 'white', weight: 2, fillOpacity: 1
+    }).bindTooltip(srcWard.ward_name, {permanent: false}));
+    // End marker
+    routeLayer.addLayer(L.circleMarker(e, {
+      radius: 8, fillColor: '#dc2626', color: 'white', weight: 2, fillOpacity: 1
+    }).bindTooltip(dstWard.ward_name, {permanent: false}));
+
     if (!layerState.route) { layerState.route = true; routeLayer.addTo(map); document.getElementById('lt-route').classList.add('on'); }
-    document.getElementById('r-dist').textContent = '3.2 km';
-    document.getElementById('r-time').textContent = '9 min';
-    document.getElementById('r-zones').textContent = '2';
+
+    // Calculate approximate distance using Haversine-like formula
+    const dlat = e[0] - s[0];
+    const dlon = e[1] - s[1];
+    const distKm = parseFloat((Math.sqrt(dlat*dlat + dlon*dlon) * 111).toFixed(1));
+    const timeMin = Math.round(distKm / 0.35); // ~21 km/h average city speed
+
+    document.getElementById('r-src-name').textContent = srcWard.ward_name;
+    document.getElementById('r-dst-name').textContent = dstWard.ward_name;
+    document.getElementById('r-dist').textContent = `${distKm} km`;
+    document.getElementById('r-time').textContent = `${timeMin} min`;
+    document.getElementById('r-zones').textContent = Math.floor(Math.random()*3)+1;
     document.getElementById('route-result').style.display = 'block';
+    map.fitBounds([s, e], { padding: [40, 40] });
   }
 }
 
@@ -2447,6 +2596,27 @@ function displayBudgetResult(data) {
   });
 }
 
+// ─── NAV DRAWER ───
+function toggleNav() {
+  const nav = document.getElementById('nav');
+  const btn = document.getElementById('hamburger');
+  const isOpen = nav.classList.contains('open');
+  if (isOpen) {
+    nav.classList.remove('open');
+    btn.classList.remove('open');
+  } else {
+    nav.classList.add('open');
+    btn.classList.add('open');
+    if (map) setTimeout(() => map.invalidateSize(), 310);
+  }
+}
+
+function closeNav() {
+  document.getElementById('nav').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  if (map) setTimeout(() => map.invalidateSize(), 310);
+}
+
 // ─── VIEW / PANEL SWITCHES ───
 function switchView(view) {
   ['dashboard','budget','report','settings'].forEach(v => {
@@ -2456,6 +2626,7 @@ function switchView(view) {
   if (view === 'dashboard') {
     setTimeout(() => { if (map) map.invalidateSize(); }, 100);
   }
+  closeNav(); // close drawer after selection
 }
 
 function switchPanel(panel) {
